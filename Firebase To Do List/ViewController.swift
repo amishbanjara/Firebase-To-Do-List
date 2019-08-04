@@ -11,6 +11,7 @@ import Firebase
 import FirebaseDatabase
 
 class ViewController: UITableViewController {
+    var ref: DatabaseReference!
     var keyArray:[String] = []
     var gotItems = [String] ( )
     override func numberOfSections(in tableView: UITableView) -> Int {
@@ -21,37 +22,22 @@ class ViewController: UITableViewController {
     
     override func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
         let cell = tableView.dequeueReusableCell(withIdentifier: "sampleCell", for: indexPath)
-        //print(gotItems)
         cell.textLabel?.text = gotItems[indexPath.row]
         return cell
     }
-    //For Deleting cell
     override func tableView(_ tableView: UITableView, commit editingStyle: UITableViewCell.EditingStyle, forRowAt indexPath: IndexPath) {
+        let valueArray = keyArray[indexPath.row]
         if editingStyle == .delete {
-            getAllKeys()
-            let when = DispatchTime.now() + 1
-            DispatchQueue.main.asyncAfter(deadline: when, execute: {
-                self.ref?.child("Student").child(self.keyArray[indexPath.row]).removeValue()
-                self.gotItems.remove(at: indexPath.row)
-                tableView.deleteRows(at: [indexPath], with: .automatic)
-                self.keyArray = []
-            })
+            ref = Database.database().reference().child("Student").child(valueArray)
+            ref.removeValue()
+            tableView.reloadData()
+            self.gotItems.remove(at: indexPath.row)
+            tableView.deleteRows(at: [indexPath], with: .automatic)
         }
     }
     override func  tableView(_ tableView: UITableView, canEditRowAt indexPath: IndexPath) -> Bool {
         return true
     }
-    func getAllKeys(){
-        ref?.child("Student").observeSingleEvent(of: .value, with: {(DataSnapshot) in
-            for child in DataSnapshot.children{
-                let snap = child as! DataSnapshot
-                let key = snap.key
-                print(key)
-                self.keyArray.append(key)
-            }
-        })
-    }
-    var ref: DatabaseReference!
     override func viewDidLoad() {
         super.viewDidLoad()
         fetchDataFromFirebase()
@@ -61,17 +47,17 @@ class ViewController: UITableViewController {
     }
     func fetchDataFromFirebase(){
         ref = Database.database().reference().child("Student")
-        //ref.child("Name")
         ref.observe(.value) {(snapshot: DataSnapshot) in
+            self.gotItems.removeAll()
             for nameValue in snapshot.children{
                 let snapshotContent = nameValue as? DataSnapshot
+                self.keyArray.append(snapshotContent!.key)
                 let namedata = snapshotContent?.value as? NSDictionary
                 self.gotItems.append(namedata?["name"] as! String)
-                //  print(self.gotItems)
+                self.tableView.reloadData()
             }
-            self.tableView.reloadData()
+            print(self.keyArray)
         }
     }
-    
 }
 
