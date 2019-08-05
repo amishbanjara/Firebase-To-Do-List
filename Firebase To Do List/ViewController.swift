@@ -34,6 +34,7 @@ class ViewController: UITableViewController {
             self.gotItems.remove(at: indexPath.row)
             tableView.deleteRows(at: [indexPath], with: .automatic)
         }
+         self.keyArray.removeAll()
     }
     override func  tableView(_ tableView: UITableView, canEditRowAt indexPath: IndexPath) -> Bool {
         return true
@@ -54,9 +55,8 @@ class ViewController: UITableViewController {
                 self.keyArray.append(snapshotContent!.key)
                 let namedata = snapshotContent?.value as? NSDictionary
                 self.gotItems.append(namedata?["name"] as! String)
-                self.tableView.reloadData()
             }
-            print(self.keyArray)
+            self.tableView.reloadData()
         }
     }
 }
